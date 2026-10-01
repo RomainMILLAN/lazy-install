@@ -66,6 +66,46 @@ lazy-install --light         # light theme
 lazy-install --template      # print the script template
 ```
 
+## Headless check
+
+`lazy-install --check` runs every `needs_update` without the TUI, prints what
+needs attention, and exits:
+
+| Code | Meaning |
+|---|---|
+| 0 | at least one update |
+| 1 | no update found (some apps may be in error) |
+| 2 | nothing could be checked (unreadable config, no app, usage error) |
+
+```sh
+if lazy-install --check; then echo "updates available"; fi
+```
+
+```text
+UPDATE     vscode             1.139.1 → 1.140.0
+ERROR      appsec-references  GitHub API rate-limited
+INVALID    old-tool           /x.sh is writable by others — run: chmod o-w /x.sh
+NO-ANSWER  rdm
+1 update, 1 error, 1 invalid, 1 no answer, 10 up to date
+```
+
+`--check --json` prints the same report as a stable object, in config order:
+
+```json
+{
+  "updates": [{ "name": "vscode", "installed": "1.139.1", "latest": "1.140.0" }],
+  "errors": [{ "name": "appsec-references", "kind": "error", "message": "GitHub API rate-limited" }],
+  "up_to_date": 10
+}
+```
+
+- `kind` is `error` (the check failed), `invalid` (the script is refused) or
+  `no-answer` (no result before the deadline).
+- Missing values are `null`.
+
+`--check` never writes anything: no config save, no run log, no `debug.log`. It
+runs fine while the TUI is open.
+
 ## Configuration
 
 `~/.config/lazy-install/config.json`:

@@ -34,6 +34,9 @@ jobs/      ports (CheckRunner, UpdateSpawner, ActiveUpdate on &ScriptRef), Check
            (pool, carries generations), UpdateRunner (active run + RunRecord per app)
 config/    repository: ConfigStore (strict load, atomic save under flock, sha256
            fingerprint), DTO, paths
+cli/       headless `--check`: collect() schedules every check, reads facts until the
+           channel closes (or a budget from the runner's worst_case()), projects a
+           CheckReport (pure; text + JSON through private DTOs). No ui/pty/script.
 ui/        Tui { session, jobs, view, widgets }: routes keys to intentions, executes
            effects, feeds results back as facts; no domain decision
 ```
@@ -71,6 +74,9 @@ ui/        Tui { session, jobs, view, widgets }: routes keys to intentions, exec
 - **Keys and filter/form text are never logged** (a key may be a sudo password).
 - **lazy-scp's `load()` falls back to `Default`**: never copy that here; an unreadable
   config exits 2 and is never rewritten.
+- **`--check` exit codes are a published contract** (0 update, 1 none found, 2 nothing
+  checkable) read by the dotfiles' `notify.sh`, like the JSON field names. It runs before
+  `logger::init()` (which truncates `debug.log`) and never touches the terminal.
 - Only `theme.rs` names RGB values; hints derive from `KeyMap`, never written out.
 
 ## Brand

@@ -82,6 +82,16 @@ impl Versions {
         }
     }
 
+    /// Read-only projections, for formats that need the two values apart (the
+    /// `--check --json` report). Display uses [`Versions::label`].
+    pub fn installed(&self) -> Option<&str> {
+        self.installed.as_ref().map(DisplayText::as_str)
+    }
+
+    pub fn latest(&self) -> Option<&str> {
+        self.latest.as_ref().map(DisplayText::as_str)
+    }
+
     /// `0.44.1 → 0.45.0`, `0.45.0`, or nothing at all.
     pub fn label(&self) -> String {
         match (&self.installed, &self.latest) {

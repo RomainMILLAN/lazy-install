@@ -44,6 +44,17 @@ impl BashCheckRunner {
     pub fn new(timeout: Duration) -> Self {
         BashCheckRunner { timeout }
     }
+
+    /// The longest one `run` can take: the check up to its timeout (the drain
+    /// window is inside it), plus a margin for what surrounds it — the trust
+    /// check, reading the script text (no `bash -n` here: that runs only at
+    /// registration), spawning and reaping. Derived from this instance's
+    /// timeout, so the timeout has one source of truth.
+    pub fn worst_case(&self) -> Duration {
+        self.timeout + Self::MARGIN
+    }
+
+    const MARGIN: Duration = Duration::from_secs(5);
 }
 
 impl CheckRunner for BashCheckRunner {
@@ -253,5 +264,17 @@ fn collect(child: &mut Child, token_r: OwnedFd, timeout: Duration) -> Collected 
         token: std::mem::take(&mut streams[2].buf),
         stderr: std::mem::take(&mut streams[1].buf),
         timed_out: false,
+    }
+}
+
+#[cfg(test)]
+mod worst_case_tests {
+    use super::*;
+
+    #[test]
+    fn worst_case_follows_the_instance_timeout() {
+        assert!(BashCheckRunner::default().worst_case() > Duration::from_secs(30));
+        let slow = BashCheckRunner::new(Duration::from_secs(60));
+        assert!(slow.worst_case() > Duration::from_secs(60));
     }
 }
