@@ -386,8 +386,8 @@ impl Tui {
         } else if km.check_all.matches(&key) {
             let effects = self.session.request_check_all();
             self.execute(effects);
-        } else if km.focus_terminal.matches(&key) {
-            self.focus_terminal();
+        } else if km.focus_logs.matches(&key) {
+            self.focus_logs();
         } else if km.scroll_up.matches(&key) || km.scroll_down.matches(&key) {
             self.scroll(km.scroll_up.matches(&key));
         }
@@ -395,7 +395,7 @@ impl Tui {
 
     fn handle_terminal_key(&mut self, key: KeyEvent) {
         let km = &self.widgets.km;
-        if km.focus_list.matches(&key) {
+        if km.leave_terminal.matches(&key) {
             self.view.focus = Focus::List;
             return;
         }
@@ -404,10 +404,18 @@ impl Tui {
             return;
         }
         if self.jobs.updates.active_app().is_none() {
-            // Nothing to type into: any key returns to the list.
-            self.view.focus = Focus::List;
+            // Nothing to type into: the panel only shows the last run.
+            if km.focus_apps.matches(&key)
+                || km.escape.matches(&key)
+                || km.focus_logs.matches(&key)
+                || km.quit.matches(&key)
+            {
+                self.view.focus = Focus::List;
+            }
             return;
         }
+        // A run has the keys: everything goes to the script, `1` included —
+        // it may be part of a sudo password. Ctrl+O is the way out.
         let app_cursor = self.active_screen().is_some_and(|s| s.application_cursor());
         if let Some(screen) = self.active_screen() {
             screen.reset_scroll();
@@ -770,14 +778,13 @@ impl Tui {
         }
     }
 
-    fn focus_terminal(&mut self) {
-        match self.jobs.updates.active_app() {
-            Some(active) => {
-                self.select(active);
-                self.view.focus = Focus::Terminal;
-            }
-            None => self.flash("No update is running", false),
+    /// `2`: the Logs panel — the running update if there is one, otherwise
+    /// the last run of the selected application, to scroll through.
+    fn focus_logs(&mut self) {
+        if let Some(active) = self.jobs.updates.active_app() {
+            self.select(active);
         }
+        self.view.focus = Focus::Terminal;
     }
 
     fn active_screen(&self) -> Option<crate::pty::Screen> {
@@ -876,7 +883,7 @@ impl Tui {
             .is_some_and(|s| looks_like_password_prompt(&s.last_line()));
         let (text, style) = if prompt {
             (
-                " ⚠ The update is waiting for a password — press tab to type it in the terminal ",
+                " ⚠ The update is waiting for a password — press 2 to type it in the terminal ",
                 Style::default()
                     .fg(theme::color_background())
                     .bg(theme::color_danger())
@@ -884,7 +891,7 @@ impl Tui {
             )
         } else {
             (
-                " keys → list (tab to type in the terminal) ",
+                " keys → apps (2 to type in the terminal) ",
                 Style::default()
                     .fg(theme::color_background())
                     .bg(theme::color_warning()),
@@ -924,7 +931,9 @@ impl Tui {
             self.widgets.flash = None;
         }
         let hints = match self.view.focus {
-            Focus::Terminal => terminal_hints(&self.widgets.km),
+            Focus::Terminal => {
+                terminal_hints(&self.widgets.km, self.jobs.updates.active_app().is_some())
+            }
             Focus::List if self.view.filtering => filter_hints(&self.widgets.km),
             Focus::List => list_hints(&self.widgets.km),
         };

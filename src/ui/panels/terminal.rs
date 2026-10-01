@@ -25,8 +25,8 @@ impl TerminalPanel<'_> {
             _ => String::new(),
         };
         let title = match self.app_name {
-            Some(n) => format!(" Logs · {n}{state} "),
-            None => " Logs ".to_string(),
+            Some(n) => format!(" [2] Logs · {n}{state} "),
+            None => " [2] Logs ".to_string(),
         };
         let block = Block::default()
             .title(truncate_chars(

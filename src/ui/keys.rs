@@ -134,8 +134,13 @@ pub struct KeyMap {
     pub check: KeyBinding,
     pub check_all: KeyBinding,
     pub filter: KeyBinding,
-    pub focus_terminal: KeyBinding,
-    pub focus_list: KeyBinding,
+    /// `1`: the Apps panel. Never reaches the list while a run has the keys:
+    /// a sudo password may contain a `1`.
+    pub focus_apps: KeyBinding,
+    /// `2` (or tab): the Logs panel, the terminal of the run.
+    pub focus_logs: KeyBinding,
+    /// The one way out of a terminal that takes every other key.
+    pub leave_terminal: KeyBinding,
     pub scroll_up: KeyBinding,
     pub scroll_down: KeyBinding,
     pub toggle_theme: KeyBinding,
@@ -159,8 +164,9 @@ impl KeyMap {
             ("check", &self.check),
             ("check_all", &self.check_all),
             ("filter", &self.filter),
-            ("focus_terminal", &self.focus_terminal),
-            ("focus_list", &self.focus_list),
+            ("focus_apps", &self.focus_apps),
+            ("focus_logs", &self.focus_logs),
+            ("leave_terminal", &self.leave_terminal),
             ("scroll_up", &self.scroll_up),
             ("scroll_down", &self.scroll_down),
             ("toggle_theme", &self.toggle_theme),
@@ -221,8 +227,13 @@ pub fn default_key_map() -> KeyMap {
         check: bind(vec![key(KeyCode::Char('r'))], "r", "check"),
         check_all: bind(vec![key_shift(KeyCode::Char('R'))], "R", "check all"),
         filter: bind(vec![key(KeyCode::Char('/'))], "/", "filter"),
-        focus_terminal: bind(vec![key(KeyCode::Tab)], "tab", "terminal"),
-        focus_list: bind(vec![key_ctrl(KeyCode::Char('o'))], "Ctrl+O", "back to list"),
+        focus_apps: bind(vec![key(KeyCode::Char('1'))], "1", "apps"),
+        focus_logs: bind(
+            vec![key(KeyCode::Char('2')), key(KeyCode::Tab)],
+            "2/tab",
+            "logs",
+        ),
+        leave_terminal: bind(vec![key_ctrl(KeyCode::Char('o'))], "Ctrl+O", "back to apps"),
         scroll_up: bind(vec![key(KeyCode::PageUp)], "pgup", "scroll up"),
         scroll_down: bind(vec![key(KeyCode::PageDown)], "pgdn", "scroll down"),
         toggle_theme: bind(vec![key_ctrl(KeyCode::Char('l'))], "Ctrl+L", "toggle theme"),
@@ -238,7 +249,7 @@ mod tests {
     fn no_two_bindings_claim_the_same_key() {
         let km = default_key_map();
         let named = km.all_named();
-        assert_eq!(named.len(), 18, "a binding is missing from all_named()");
+        assert_eq!(named.len(), 19, "a binding is missing from all_named()");
         for (i, (name, a)) in named.iter().enumerate() {
             for (other, b) in &named[i + 1..] {
                 for k in &a.keys {
@@ -269,6 +280,9 @@ mod tests {
         let km = default_key_map();
         assert!(km.update_all.matches(&key_shift(KeyCode::Char('U'))));
         assert!(!km.update_all.matches(&key(KeyCode::Char('u'))));
-        assert!(km.focus_list.matches(&key_ctrl(KeyCode::Char('o'))));
+        assert!(km.leave_terminal.matches(&key_ctrl(KeyCode::Char('o'))));
+        assert!(km.focus_apps.matches(&key(KeyCode::Char('1'))));
+        assert!(km.focus_logs.matches(&key(KeyCode::Char('2'))));
+        assert!(km.focus_logs.matches(&key(KeyCode::Tab)));
     }
 }

@@ -91,7 +91,7 @@ fn the_filter_is_shown_in_the_title_with_a_cursor_while_typing() {
         }
         .render(area, &mut buf);
         let t = text(&buf, area);
-        assert!(t.contains(&format!("Apps (2/9) {expected}")), "{t}");
+        assert!(t.contains(&format!("[1] Apps (2/9) {expected}")), "{t}");
     }
 }
 
@@ -126,7 +126,7 @@ fn terminal_without_run_shows_the_last_check() {
     .render(area, &mut buf);
     let t = text(&buf, area);
     assert!(
-        t.contains("Logs · kitty") && t.contains("Last check: timeout"),
+        t.contains("[2] Logs · kitty") && t.contains("Last check: timeout"),
         "{t}"
     );
 }

@@ -48,7 +48,7 @@ pub fn list_hints(km: &KeyMap) -> Vec<Hint> {
         km.delete.hint(),
         km.check.hint(),
         km.check_all.hint(),
-        km.focus_terminal.hint_as("logs"),
+        km.focus_logs.hint(),
         km.filter.hint(),
         km.help.hint(),
         km.quit.hint(),
@@ -65,14 +65,24 @@ pub fn filter_hints(km: &KeyMap) -> Vec<Hint> {
     ]
 }
 
-/// While the terminal has focus every key goes to the script, except these.
-pub fn terminal_hints(km: &KeyMap) -> Vec<Hint> {
-    vec![
-        km.focus_list.hint(),
-        km.scroll_up.hint(),
-        km.scroll_down.hint(),
-        Hint::new("keys", "→ script"),
-    ]
+/// The Logs panel. While a run has the keys every key goes to the script but
+/// these, so `1` is not offered then: it would be typed into the script.
+pub fn terminal_hints(km: &KeyMap, running: bool) -> Vec<Hint> {
+    if running {
+        vec![
+            km.leave_terminal.hint(),
+            km.scroll_up.hint(),
+            km.scroll_down.hint(),
+            Hint::new("keys", "→ script"),
+        ]
+    } else {
+        vec![
+            km.focus_apps.hint(),
+            km.scroll_up.hint(),
+            km.scroll_down.hint(),
+            km.escape.hint_as("back to apps"),
+        ]
+    }
 }
 
 #[cfg(test)]
@@ -85,7 +95,8 @@ mod tests {
         let km = default_key_map();
         for hint in list_hints(&km)
             .into_iter()
-            .chain(terminal_hints(&km).into_iter().take(3))
+            .chain(terminal_hints(&km, true).into_iter().take(3))
+            .chain(terminal_hints(&km, false))
         {
             assert!(km.names_only_bound_keys(&hint.key), "{hint:?}");
         }

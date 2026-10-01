@@ -173,8 +173,8 @@ Two consequences to keep in mind:
 | `a` / `e` / `d` | add / edit / delete |
 | `r` / `R` | check the selected / every application |
 | `/` | filter inline: type to filter live, `↑↓` move, `enter` keep, `esc` clear |
-| `tab` | give the keys to the running update's terminal |
-| `Ctrl+O` | back to the list |
+| `1` / `2` (or `tab`) | focus the Apps / Logs panel (during a run, `1` goes to the script) |
+| `Ctrl+O` | back to Apps while a run has the keys |
 | `PgUp` / `PgDn` | scroll the terminal |
 | `?` | help |
 | `Ctrl+L` | toggle theme |

@@ -47,7 +47,7 @@ impl AppsPanel<'_> {
             styles::border_style(self.focused)
         };
         let block = Block::default()
-            .title(format!(" Apps ({count}){filter_text} "))
+            .title(format!(" [1] Apps ({count}){filter_text} "))
             .title_style(styles::block_title_style(self.focused))
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
