@@ -8,6 +8,39 @@ use std::path::{Path, PathBuf};
 use super::contract::{Function, PRELUDE};
 use super::trust::TrustedScript;
 
+/// Marks every descriptor from `first` up close-on-exec. For `pre_exec` only.
+///
+/// lazy-install may itself have inherited descriptors without CLOEXEC — from
+/// its terminal, an IDE, a CI runner (the GitHub runner hands fds 142 and 145
+/// down). Without this they would reach every script. Marking rather than
+/// closing keeps std's own CLOEXEC error pipe working until the exec.
+///
+/// # Safety
+/// Only async-signal-safe calls (`close_range`, `fcntl`): fit for `pre_exec`.
+pub(crate) unsafe fn cloexec_from(first: i32) {
+    use nix::libc;
+    // CLOSE_RANGE_CLOEXEC (Linux 5.11+).
+    const CLOSE_RANGE_CLOEXEC: libc::c_uint = 1 << 2;
+    let done = libc::syscall(
+        libc::SYS_close_range,
+        first as libc::c_uint,
+        libc::c_uint::MAX,
+        CLOSE_RANGE_CLOEXEC,
+    ) == 0;
+    if !done {
+        let max = match libc::sysconf(libc::_SC_OPEN_MAX) {
+            n if n > 0 => n.min(65_536) as i32,
+            _ => 1024,
+        };
+        for fd in first..max {
+            let flags = libc::fcntl(fd, libc::F_GETFD);
+            if flags >= 0 {
+                libc::fcntl(fd, libc::F_SETFD, flags | libc::FD_CLOEXEC);
+            }
+        }
+    }
+}
+
 /// Absolute on purpose: `PATH` is the user's, and `bash` must not depend on it.
 pub const BASH: &str = "/bin/bash";
 

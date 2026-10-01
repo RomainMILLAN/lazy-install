@@ -177,8 +177,23 @@ fn a_flood_of_output_does_not_block() {
     assert!(matches!(run(&s), CheckOutcome::UpToDate(_)));
 }
 
+/// Also what the GitHub runner does to its children (fds 142 and 145): a
+/// descriptor inherited without CLOEXEC. Opened here on purpose, so the test
+/// does not depend on where it runs.
+fn inherited_fd() -> std::fs::File {
+    use std::os::fd::{AsRawFd, FromRawFd};
+    let f = fs::File::open("/dev/null").unwrap();
+    // A high number, as on the runner: a low one would be overwritten by the
+    // child's own dup2 onto 3 and 4, and the test would prove nothing.
+    // F_DUPFD returns a copy without CLOEXEC.
+    let high = unsafe { nix::libc::fcntl(f.as_raw_fd(), nix::libc::F_DUPFD, 140) };
+    assert!(high >= 140);
+    unsafe { std::fs::File::from_raw_fd(high) }
+}
+
 #[test]
 fn only_our_fds_reach_the_check() {
+    let _inherited = inherited_fd();
     let d = dir();
     let out = d.path().join("fds.txt");
     let body = format!(

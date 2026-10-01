@@ -116,6 +116,8 @@ fn run_check(script: TrustedScript, timeout: Duration) -> std::io::Result<CheckO
             }
             libc::close(t);
             libc::close(n);
+            // 0-2 are stdio, 3 the token, 4 the nonce: nothing else crosses.
+            super::command::cloexec_from(5);
             Ok(())
         });
     }

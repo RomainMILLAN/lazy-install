@@ -3,6 +3,7 @@
 //! top-level side effect cannot run just because someone typed a path.
 
 use std::io::Read;
+use std::os::unix::process::CommandExt;
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
@@ -244,13 +245,21 @@ fn defined_functions(text: &str) -> Vec<String> {
 
 fn syntax_check(path: &std::path::Path) -> Result<(), ContractError> {
     let spec = CommandSpec::syntax_check(path);
-    let mut child = Command::new(&spec.program)
-        .args(&spec.args)
+    let mut cmd = Command::new(&spec.program);
+    cmd.args(&spec.args)
         .env_clear()
         .envs(spec.env.iter().map(|(k, v)| (k, v)))
         .stdin(Stdio::null())
         .stdout(Stdio::null())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::piped());
+    // SAFETY: only async-signal-safe calls, see `cloexec_from`.
+    unsafe {
+        cmd.pre_exec(|| {
+            super::command::cloexec_from(3);
+            Ok(())
+        });
+    }
+    let mut child = cmd
         .spawn()
         .map_err(|e| ContractError::Unreadable(format!("cannot run bash: {e}")))?;
     let deadline = Instant::now() + SYNTAX_TIMEOUT;
