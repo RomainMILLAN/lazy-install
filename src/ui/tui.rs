@@ -34,7 +34,7 @@ use crate::script::{validate, BashCheckRunner};
 use crate::session::{Effect, Fact, Session};
 
 use super::app_form::{AppForm, FormStep};
-use super::components::statusbar::{list_hints, terminal_hints};
+use super::components::statusbar::{filter_hints, list_hints, terminal_hints};
 use super::components::{
     BrowserOutcome, Choice, ChoiceDialog, ConfirmDialog, FileBrowser, HelpPopup, InputBox,
     StatusBar,
@@ -46,7 +46,7 @@ use super::panels::apps::{AppsPanel, Row};
 use super::panels::terminal::TerminalPanel;
 use super::style::{styles, theme};
 use super::text::{fuzzy_match, truncate_chars};
-use super::view::{Focus, ViewState};
+use super::view::{FilterOutcome, Focus, ViewState};
 
 /// Hang-up to kill, when quitting or terminating a run.
 const GRACE: Duration = Duration::from_secs(5);
@@ -64,7 +64,6 @@ pub struct Jobs {
 enum InputPurpose {
     Name,
     Script,
-    Filter,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -339,7 +338,14 @@ impl Tui {
         if self.view.ignoring_keys() {
             return;
         }
-        // 4. global and list keys
+        // 4. the inline filter: while typing, every printable key is text
+        if self.view.filtering {
+            if let FilterOutcome::Navigate { up } = self.view.filter_key(key) {
+                self.move_selection(up);
+            }
+            return;
+        }
+        // 5. global and list keys
         let km = &self.widgets.km;
         if km.toggle_theme.matches(&key) {
             theme::toggle_mode();
@@ -351,21 +357,14 @@ impl Tui {
         {
             self.request_quit();
         } else if km.up.matches(&key) {
-            self.view.selected = self.view.selected.saturating_sub(1);
+            self.move_selection(true);
         } else if km.down.matches(&key) {
-            if self.view.selected + 1 < self.visible().len() {
-                self.view.selected += 1;
-            }
+            self.move_selection(false);
         } else if km.escape.matches(&key) {
             self.view.filter.clear();
+            self.view.selected = 0;
         } else if km.filter.matches(&key) {
-            let current = self.view.filter.clone();
-            self.open_input(
-                InputPurpose::Filter,
-                "Filter",
-                "type part of a name",
-                &current,
-            );
+            self.view.start_filter();
         } else if km.update.matches(&key) {
             if let Some(app) = self.selected_app() {
                 self.intention(|s| s.request_update(app));
@@ -451,12 +450,7 @@ impl Tui {
                         self.widgets.modal = Modal::None;
                         self.widgets.form = None;
                     }
-                    _ => {
-                        if purpose == InputPurpose::Filter {
-                            self.view.filter = self.widgets.input.value();
-                            self.view.selected = 0;
-                        }
-                    }
+                    _ => {}
                 }
             }
             Modal::Confirm(purpose) => {
@@ -671,10 +665,6 @@ impl Tui {
 
     fn input_submitted(&mut self, purpose: InputPurpose, value: &str) {
         match purpose {
-            InputPurpose::Filter => {
-                self.view.filter = value.trim().to_string();
-                self.view.selected = 0;
-            }
             InputPurpose::Name => {
                 let Some(form) = self.widgets.form.as_mut() else {
                     return;
@@ -762,9 +752,18 @@ impl Tui {
         self.visible().get(self.view.selected).copied()
     }
 
+    fn move_selection(&mut self, up: bool) {
+        if up {
+            self.view.selected = self.view.selected.saturating_sub(1);
+        } else if self.view.selected + 1 < self.visible().len() {
+            self.view.selected += 1;
+        }
+    }
+
     fn select(&mut self, app: AppId) {
         if !self.visible().contains(&app) {
             self.view.filter.clear();
+            self.view.filtering = false;
         }
         if let Some(i) = self.visible().iter().position(|a| *a == app) {
             self.view.selected = i;
@@ -842,6 +841,7 @@ impl Tui {
             selected: self.view.selected,
             focused: self.view.focus == Focus::List,
             filter: &self.view.filter,
+            filtering: self.view.filtering,
             total: self.session.catalog().len(),
             spinner,
         }
@@ -925,6 +925,7 @@ impl Tui {
         }
         let hints = match self.view.focus {
             Focus::Terminal => terminal_hints(&self.widgets.km),
+            Focus::List if self.view.filtering => filter_hints(&self.widgets.km),
             Focus::List => list_hints(&self.widgets.km),
         };
         StatusBar::render(area, buf, &hints);

@@ -22,28 +22,36 @@ pub struct AppsPanel<'a> {
     pub selected: usize,
     pub focused: bool,
     pub filter: &'a str,
+    /// Typing goes to the filter right now (cursor shown, warning border).
+    pub filtering: bool,
     pub total: usize,
     pub spinner: char,
 }
 
 impl AppsPanel<'_> {
     pub fn render(&self, area: Rect, buf: &mut Buffer) {
-        let title = if self.filter.is_empty() {
-            format!(" Apps ({}) ", self.total)
+        // As in lazy-transfer: the filter lives in the title, `/text█` while typing.
+        let count = if self.filter.is_empty() {
+            format!("{}", self.total)
         } else {
-            format!(
-                " Apps · /{} ({}/{}) ",
-                self.filter,
-                self.rows.len(),
-                self.total
-            )
+            format!("{}/{}", self.rows.len(), self.total)
+        };
+        let filter_text = match (self.filtering, self.filter.is_empty()) {
+            (true, _) => format!(" /{}█", self.filter),
+            (false, false) => format!(" /{}", self.filter),
+            (false, true) => String::new(),
+        };
+        let border = if self.filtering {
+            Style::default().fg(theme::color_warning())
+        } else {
+            styles::border_style(self.focused)
         };
         let block = Block::default()
-            .title(title)
+            .title(format!(" Apps ({count}){filter_text} "))
             .title_style(styles::block_title_style(self.focused))
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
-            .border_style(styles::border_style(self.focused));
+            .border_style(border);
         let inner = block.inner(area);
         block.render(area, buf);
         if inner.height == 0 || inner.width < 10 {

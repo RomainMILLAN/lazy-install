@@ -172,7 +172,7 @@ Two consequences to keep in mind:
 | `U` | update every outdated application |
 | `a` / `e` / `d` | add / edit / delete |
 | `r` / `R` | check the selected / every application |
-| `/` | filter |
+| `/` | filter inline: type to filter live, `↑↓` move, `enter` keep, `esc` clear |
 | `tab` | give the keys to the running update's terminal |
 | `Ctrl+O` | back to the list |
 | `PgUp` / `PgDn` | scroll the terminal |

@@ -59,6 +59,7 @@ fn every_tag_is_drawn_with_its_label() {
             selected: 0,
             focused: true,
             filter: "",
+            filtering: false,
             total: rows.len(),
             spinner: '*',
         }
@@ -74,6 +75,27 @@ fn every_tag_is_drawn_with_its_label() {
 }
 
 #[test]
+fn the_filter_is_shown_in_the_title_with_a_cursor_while_typing() {
+    let area = Rect::new(0, 0, 60, 6);
+    let rows = rows();
+    for (filtering, expected) in [(true, "/up█"), (false, "/up ")] {
+        let mut buf = Buffer::empty(area);
+        AppsPanel {
+            rows: &rows[..2],
+            selected: 0,
+            focused: true,
+            filter: "up",
+            filtering,
+            total: 9,
+            spinner: '*',
+        }
+        .render(area, &mut buf);
+        let t = text(&buf, area);
+        assert!(t.contains(&format!("Apps (2/9) {expected}")), "{t}");
+    }
+}
+
+#[test]
 fn empty_list_says_how_to_start() {
     let area = Rect::new(0, 0, 60, 10);
     let mut buf = Buffer::empty(area);
@@ -82,6 +104,7 @@ fn empty_list_says_how_to_start() {
         selected: 0,
         focused: true,
         filter: "",
+        filtering: false,
         total: 0,
         spinner: '*',
     }

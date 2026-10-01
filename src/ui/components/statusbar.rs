@@ -55,6 +55,16 @@ pub fn list_hints(km: &KeyMap) -> Vec<Hint> {
     ]
 }
 
+/// While typing in the inline filter.
+pub fn filter_hints(km: &KeyMap) -> Vec<Hint> {
+    vec![
+        Hint::new("type", "filter"),
+        Hint::new("enter", "keep"),
+        km.escape.hint_as("clear"),
+        Hint::new("\u{2191}/\u{2193}", "move"),
+    ]
+}
+
 /// While the terminal has focus every key goes to the script, except these.
 pub fn terminal_hints(km: &KeyMap) -> Vec<Hint> {
     vec![
