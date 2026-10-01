@@ -1,0 +1,5 @@
+# cargo-deny: only the advisories check runs in CI (known vulnerabilities and
+# unmaintained crates in Cargo.lock).
+[advisories]
+version = 2
+yanked = "deny"

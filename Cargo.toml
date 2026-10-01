@@ -1,0 +1,41 @@
+[package]
+name = "lazy-install"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.94"
+description = "A TUI that tells you which of your apps need an update, and runs the update script in an embedded terminal"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/RomainMILLAN/lazy-install"
+keywords = ["update", "tui", "terminal", "installer", "dotfiles"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+ratatui = "0.30"
+crossterm = "0.29"
+tui-term = "0.3"
+vt100 = "0.16"
+portable-pty = "0.9"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+log = "0.4"
+dirs = "6"
+clap = { version = "4", features = ["derive"] }
+thiserror = "2"
+nix = { version = "0.31", features = ["user", "signal", "process", "fs", "poll", "term"] }
+sha2 = "0.10"
+strip-ansi-escapes = "0.2"
+
+# The build stamp needs a date without shelling out to date(1).
+[build-dependencies]
+chrono = "0.4"
+
+[profile.release]
+# strip = "debuginfo", never `true`: LI_GIT_COMMIT exists so bug reports can be
+# traced, and dropping the symbol table would make their backtraces unreadable.
+strip = "debuginfo"
+lto = "thin"
+
+[dev-dependencies]
+tempfile = "3"
+serial_test = "3"

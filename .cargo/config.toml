@@ -1,0 +1,5 @@
+# The single definition of "how do we build for another architecture": CI
+# installs the toolchain packages and calls `cargo build --target …`, this file
+# supplies the linker, on the runner and on a laptop alike.
+[target.aarch64-unknown-linux-gnu]
+linker = "aarch64-linux-gnu-gcc"
