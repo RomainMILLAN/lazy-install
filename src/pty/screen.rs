@@ -29,7 +29,9 @@ impl Screen {
         f(self.lock().screen())
     }
 
-    pub(crate) fn process(&self, bytes: &[u8]) {
+    /// Feeds terminal output. The reader thread does it for real runs; the
+    /// screenshots example does it to draw one.
+    pub fn process(&self, bytes: &[u8]) {
         self.lock().process(bytes);
     }
 

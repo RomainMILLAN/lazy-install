@@ -1,16 +1,25 @@
-# lazy-install
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/assets/banner-light.png">
+    <img src="docs/assets/banner-dark.png" alt="lazy-install — know which of your apps need an update" width="880">
+  </picture>
+</p>
 
-A TUI that tells you which of your applications need an update, and runs their
-update script in an embedded terminal.
+<p align="center">
+  <a href="https://github.com/RomainMILLAN/lazy-install/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/RomainMILLAN/lazy-install/ci.yml?branch=main&label=ci&color=6D28D9" alt="CI"></a>
+  <a href="https://github.com/RomainMILLAN/lazy-install/releases"><img src="https://img.shields.io/github/v/release/RomainMILLAN/lazy-install?include_prereleases&sort=semver&display_name=tag&color=6D28D9" alt="Release"></a>
+  <a href="https://www.rust-lang.org"><img src="https://img.shields.io/badge/rust-1.94%2B-6D28D9" alt="Rust 1.94+"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/RomainMILLAN/lazy-install?color=6D28D9" alt="License"></a>
+</p>
 
-```
-╭ Apps (3) ─────────────────────────────╮╭ Logs · outdated · running ────────────╮
-│ kitty      OK           0.45.0        ││downloading...                          │
-│ dbeaver    ⠙ updating…  26.1 → 26.2   ││[sudo] password for me: █               │
-│ rdm        error        curl: (6) …   ││                                        │
-╰───────────────────────────────────────╯╰────────────────────────────────────────╯
- u update  U update all  j/k move  a add  e edit  d delete  r check  R check all …
-```
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshot-update-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/assets/screenshot-update-light.png">
+    <img src="docs/assets/screenshot-update-dark.png" alt="An update running in the embedded terminal, waiting for the sudo password" width="880">
+  </picture>
+</p>
 
 An application is a **name** and a **bash script**. The script answers two
 questions: *is there an update?* (`needs_update`) and *install it* (`update`).

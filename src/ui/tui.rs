@@ -23,7 +23,7 @@ use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use ratatui::{Frame, Terminal};
 
-use crate::catalog::{AppId, Application};
+use crate::catalog::{AppId, Application, Tag};
 use crate::config::paths::{is_inside, spell};
 use crate::config::ConfigStore;
 use crate::jobs::{CheckScheduler, UpdateRunner};
@@ -34,6 +34,7 @@ use crate::script::{validate, BashCheckRunner};
 use crate::session::{Effect, Fact, Session};
 
 use super::app_form::{AppForm, FormStep};
+use super::brand;
 use super::components::statusbar::{filter_hints, list_hints, terminal_hints};
 use super::components::{
     BrowserOutcome, Choice, ChoiceDialog, ConfirmDialog, FileBrowser, HelpPopup, InputBox,
@@ -41,6 +42,7 @@ use super::components::{
 };
 use super::keys::{default_key_map, KeyMap};
 use super::layout::{centered, compute_layout, Layout};
+use super::logo::Logo;
 use super::messages::{Action, BgMsg};
 use super::panels::apps::{AppsPanel, Row};
 use super::panels::terminal::TerminalPanel;
@@ -103,6 +105,8 @@ struct Widgets {
     delete_after_persist: Option<PathBuf>,
     tick: usize,
     pty_size: (u16, u16),
+    /// The real logo; `None` until the terminal has been asked what it draws.
+    logo: Option<Logo>,
     quitting: Option<Instant>,
     should_quit: bool,
 }
@@ -152,6 +156,7 @@ impl Tui {
                 delete_after_persist: None,
                 tick: 0,
                 pty_size: (0, 0),
+                logo: None,
                 quitting: None,
                 should_quit: false,
             },
@@ -166,6 +171,9 @@ impl Tui {
         enable_raw_mode()?;
         let mut stdout = io::stdout();
         execute!(stdout, EnterAlternateScreen)?;
+        // After the alternate screen, before the first event read: the query
+        // answers arrive on stdin.
+        self.widgets.logo = Some(Logo::detect());
         let mut terminal = Terminal::new(CrosstermBackend::new(stdout))?;
         terminal.clear()?;
 
@@ -816,6 +824,26 @@ impl Tui {
 
     // --- drawing --------------------------------------------------------------
 
+    /// The header counts, over every application (not just the filtered ones).
+    fn summary(&self) -> brand::Summary {
+        let tags: Vec<Tag> = self
+            .session
+            .catalog()
+            .ids()
+            .into_iter()
+            .filter_map(|id| self.session.runtime(id).map(|r| r.tag()))
+            .collect();
+        brand::Summary {
+            total: tags.len(),
+            updates: tags.iter().filter(|t| **t == Tag::Update).count(),
+            problems: tags
+                .iter()
+                .filter(|t| matches!(t, Tag::Error | Tag::Failed | Tag::Invalid))
+                .count(),
+            busy: tags.iter().filter(|t| **t == Tag::Updating).count(),
+        }
+    }
+
     fn rows(&self, ids: &[AppId]) -> Vec<Row> {
         ids.iter()
             .filter_map(|id| {
@@ -842,6 +870,12 @@ impl Tui {
             self.view.selected = ids.len().saturating_sub(1);
         }
         let rows = self.rows(&ids);
+        if let Some(header) = layout.header {
+            brand::render_header(header, buf, &self.summary());
+            if let Some(logo) = self.widgets.logo.as_mut() {
+                logo.render(brand::logo_area(header), buf);
+            }
+        }
         let spinner = SPINNER[(self.widgets.tick / 2) % SPINNER.len()];
         AppsPanel {
             rows: &rows,
@@ -946,7 +980,7 @@ impl Tui {
             Modal::Help => self
                 .widgets
                 .help
-                .render(centered(area, 66, 30), buf, &self.widgets.km),
+                .render(centered(area, 66, 34), buf, &self.widgets.km),
             Modal::Browser => self.widgets.browser.render(centered(area, 80, 24), buf),
             Modal::Input(_) => self.widgets.input.render(centered(area, 76, 6), buf),
             Modal::Confirm(_) => {

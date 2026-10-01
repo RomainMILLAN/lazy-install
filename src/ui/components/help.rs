@@ -2,6 +2,7 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::widgets::{Block, BorderType, Borders, Clear, Widget};
 
+use crate::ui::brand;
 use crate::ui::keys::KeyMap;
 use crate::ui::style::styles;
 use crate::ui::text::truncate_chars;
@@ -40,7 +41,7 @@ impl HelpPopup {
         }
         Clear.render(area, buf);
         let block = Block::default()
-            .title(" Help ")
+            .title(format!(" {} v{} · help ", brand::NAME, brand::VERSION))
             .title_style(styles::block_title_style(true))
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)

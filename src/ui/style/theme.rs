@@ -33,18 +33,17 @@ fn is_light() -> bool {
 
 // --- Dynamic colors based on theme ---
 //
-// One accent (teal), two grounds. Every text color below clears 4.5:1 against
+// One accent (violet — lazy-transfer has teal, each lazy-* gets its own), two
+// grounds. Every text color below clears 4.5:1 against
 // both `color_background` and `color_surface` in its own mode; `color_border`
 // and `color_accent_dim` are decorative and deliberately do not.
 //
-// The accent used to be a single `#0D9488` shared by both modes, which scored
-// only 3.74:1 on white — it failed AA in light mode. It is now split per mode.
 
 pub fn color_primary() -> Color {
     if is_light() {
-        Color::Rgb(0x0F, 0x76, 0x6E)
+        Color::Rgb(0x6D, 0x28, 0xD9)
     } else {
-        Color::Rgb(0x2D, 0xD4, 0xBF)
+        Color::Rgb(0xA7, 0x8B, 0xFA)
     }
 }
 
@@ -52,9 +51,9 @@ pub fn color_primary() -> Color {
 /// tracks, rules, brand-tinted separators. Never put text in this color.
 pub fn color_accent_dim() -> Color {
     if is_light() {
-        Color::Rgb(0x99, 0xF6, 0xE4)
+        Color::Rgb(0xDD, 0xD6, 0xFE)
     } else {
-        Color::Rgb(0x13, 0x4E, 0x4A)
+        Color::Rgb(0x2E, 0x22, 0x5C)
     }
 }
 

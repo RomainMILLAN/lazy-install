@@ -1,7 +1,9 @@
 pub mod app_form;
+pub mod brand;
 pub mod components;
 pub mod keys;
 pub mod layout;
+pub mod logo;
 pub mod messages;
 pub mod panels;
 pub mod style;

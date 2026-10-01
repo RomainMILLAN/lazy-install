@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 128 128" fill="none" role="img" aria-label="lazy-install">
+  <title>lazy-install</title>
+  <!-- App icon: the mark on a rounded tile, for avatars and launchers. -->
+  <rect width="128" height="128" rx="28" fill="#0B0F11"/>
+  <g transform="translate(14 14) scale(0.78125)">
+    <rect x="14" y="22" width="100" height="84" rx="18" stroke="#C9D4D6" stroke-width="10"/>
+    <path d="M56 22 V106" stroke="#C9D4D6" stroke-width="10"/>
+    <path d="M30 46 H40" stroke="#C9D4D6" stroke-width="10" stroke-linecap="round"/>
+    <path d="M30 64 H40" stroke="#C9D4D6" stroke-width="10" stroke-linecap="round"/>
+    <path d="M30 82 H40" stroke="#A78BFA" stroke-width="10" stroke-linecap="round"/>
+    <path d="M85 80 V44" stroke="#A78BFA" stroke-width="10" stroke-linecap="round"/>
+    <path d="M72 57 L85 44 L98 57" stroke="#A78BFA" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M72 88 H98" stroke="#C9D4D6" stroke-width="10" stroke-linecap="round"/>
+  </g>
+</svg>

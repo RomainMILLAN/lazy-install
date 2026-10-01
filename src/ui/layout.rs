@@ -2,11 +2,19 @@
 
 use ratatui::layout::Rect;
 
+use super::brand;
+
 /// Below this width the two panels stack.
 pub const SIDE_BY_SIDE_MIN_WIDTH: u16 = 100;
 
+/// Below this height the header folds away: a short terminal needs every row
+/// for the list and the logs.
+pub const HEADER_MIN_HEIGHT: u16 = 24;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Layout {
+    /// The brand header, when the terminal is tall and wide enough.
+    pub header: Option<Rect>,
     pub list: Rect,
     pub terminal: Rect,
     /// One row above the status bar, only when asked for.
@@ -30,20 +38,26 @@ pub fn compute_layout(width: u16, height: u16, banner: bool) -> Layout {
     let body_h = height.saturating_sub(1 + banner_h);
     let banner = (banner_h == 1).then(|| Rect::new(0, body_h, width, 1));
 
+    let header_fits = height >= HEADER_MIN_HEIGHT && width >= brand::block_w() + 4;
+    let top = if header_fits { brand::HEADER_H } else { 0 };
+    let header = header_fits.then(|| Rect::new(0, 0, width, top));
+    let body_h = body_h.saturating_sub(top);
+
     let (list, terminal) = if width >= SIDE_BY_SIDE_MIN_WIDTH {
         let list_w = (width * 2 / 5).max(36).min(width);
         (
-            Rect::new(0, 0, list_w, body_h),
-            Rect::new(list_w, 0, width - list_w, body_h),
+            Rect::new(0, top, list_w, body_h),
+            Rect::new(list_w, top, width - list_w, body_h),
         )
     } else {
         let list_h = (body_h * 2 / 5).max(3).min(body_h);
         (
-            Rect::new(0, 0, width, list_h),
-            Rect::new(0, list_h, width, body_h - list_h),
+            Rect::new(0, top, width, list_h),
+            Rect::new(0, top + list_h, width, body_h - list_h),
         )
     };
     Layout {
+        header,
         list,
         terminal,
         banner,
@@ -83,6 +97,19 @@ mod tests {
         assert!(l.terminal.y > l.list.y);
         assert_eq!(l.banner.unwrap().y, 38);
         assert_eq!(l.terminal.y + l.terminal.height, 38);
+    }
+
+    #[test]
+    fn the_header_sits_on_top_and_folds_away_when_short() {
+        let l = compute_layout(120, 40, false);
+        let h = l.header.expect("a 40-row terminal has a header");
+        assert_eq!((h.y, h.height), (0, brand::HEADER_H));
+        assert_eq!(l.list.y, brand::HEADER_H);
+        assert_eq!(l.terminal.y + l.terminal.height, 39);
+
+        let short = compute_layout(120, HEADER_MIN_HEIGHT - 1, false);
+        assert!(short.header.is_none());
+        assert_eq!(short.list.y, 0);
     }
 
     #[test]

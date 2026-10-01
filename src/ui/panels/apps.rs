@@ -63,9 +63,10 @@ impl AppsPanel<'_> {
             } else {
                 "Nothing matches the filter."
             };
+            let y = inner.y;
             buf.set_string(
                 inner.x + 1,
-                inner.y,
+                y,
                 truncate_chars(msg, inner.width as usize - 2),
                 styles::muted_style(),
             );

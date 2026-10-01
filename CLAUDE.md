@@ -72,3 +72,20 @@ ui/        Tui { session, jobs, view, widgets }: routes keys to intentions, exec
 - **lazy-scp's `load()` falls back to `Default`**: never copy that here; an unreadable
   config exits 2 and is never rewritten.
 - Only `theme.rs` names RGB values; hints derive from `KeyMap`, never written out.
+
+## Brand
+
+Validated in Claude Design, project **lazy-install — Brand**
+(`https://claude.ai/design/p/d1fd39b5-bd95-458b-a821-8af1c875fdd4`). Any visual
+change is proposed there first and integrated only once validated.
+
+- Mark: two panes like the TUI — apps list (selected row violet) | update arrow
+  on its base line. `docs/assets/logo-mark.svg` (dark), `logo-mark-light.svg`,
+  `icon.svg` (filled tile). In the TUI: `ui/brand.rs`, `╭───┬───╮ │ ≡ │ ↑ │`,
+  shown in the help popup and the empty list.
+- Accent: violet `#A78BFA` dark / `#6D28D9` light (`theme::color_primary`).
+  Tag colours carry meaning only (green OK, amber UPDATE/queued, blue
+  checking/updating, red error/failed/invalid).
+- Type: Space Grotesk (wordmark) + JetBrains Mono.
+- Regenerate every image: `cargo run --example screenshots && bash docs/assets/src/render.sh`.
+  Screens are rendered from the real widgets, never drawn by hand.
